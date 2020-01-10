@@ -3,3 +3,8 @@
 
 # Folder bin/
 bin/
+
+# .classpath
+.classpath
+.settings/
+.project
