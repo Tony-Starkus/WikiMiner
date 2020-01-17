@@ -9,7 +9,7 @@ import org.wikipedia.miner.model.Page;
 import org.wikipedia.miner.model.Wikipedia;
 import org.wikipedia.miner.util.WikipediaConfiguration;
 
-public class VerificarLinksOut {
+public class VerificarLinksOut2 {
 	
 	public static void main(String[] args) throws Exception {
 		WikipediaConfiguration conf = new WikipediaConfiguration(new File("/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml")) ;
@@ -22,15 +22,15 @@ public class VerificarLinksOut {
 		System.out.println("Links que sai do article: " + ((Article) article).getLinksOut().length);
 	    Article[] linksOut = ((Article) article).getLinksOut();
 	    for(int i = 0; i < linksOut.length; i++)
-	    	System.out.println(linksOut[i].getId() + " | ");
-	    	//System.out.println("linksOut["+ i +"] " + linksOut[i].toString() + "| Type: " + Page.createPage(wikipedia.getEnvironment(), linksOut[i].getId()).getType()) ;
+	    	System.out.println("linksOut["+ i +"] " + linksOut[i].toString() + "| Type: " + Page.createPage(wikipedia.getEnvironment(), linksOut[i].getId()).getType()) ;
 		
+	    
 	    /*CHECAGEM*/
 	    System.out.println("Vamos lá...");
 	    System.out.println();
 	    System.out.println();
 	    System.out.println();
-	    String dirCsv = "/home/thalisson/Documents/WikiMiner/";
+	    String dirCsv = "/home/thalisson/Documents/";
 	    Scanner csv_articles = new Scanner(new File(dirCsv + "csv_articles.csv"));
 	    System.out.println("Procurando...");
 	    
@@ -38,22 +38,30 @@ public class VerificarLinksOut {
 	    
 	    String[] colunas = csv_articles.nextLine().split(",");
 	    System.out.println("Tamanho da coluna: " + (colunas.length - 1));
+	    int aff = 0;
 	    while(csv_articles.hasNextLine()) {
 	    	String[] aux = csv_articles.nextLine().split(",");
 	    	System.out.println(aux[0]);
-	    	if(aux[0].equals(Integer.toString(id_article))) {
+	    	
 	    		//ArrayList<String> csv_dados = new ArrayList<>();
-	    		for(int i = 1; i < aux.length; i++) {
-	    			if(aux[i].equals("1")) {
-	    				System.out.print(colunas[i] + " | ");
-	    			}
-	    		}
-	    		for(int i = 0; i < linksOut.length; i++)
-	    	    	System.out.print(linksOut[i].getId() + " | ") ;
-	    		csv_articles.close();
-	    		System.out.println("Tamanho da coluna: " + (colunas.length - 1));
-	    		System.exit(1);
-	    	}
+    		for(int i = 1; i < aux.length; i++) {
+    			if(aux[i].equals("1")) {
+    				System.out.print(colunas[i] + " | ");
+    			}
+    		}
+    		System.out.println();
+    		Page article1 = Page.createPage(wikipedia.getEnvironment(), Integer.parseInt(aux[0]));
+    		Article[] linksOut1 = ((Article) article).getLinksOut();
+    	    for(int i = 0; i < linksOut1.length; i++)
+    	    	System.out.print(linksOut1[i].getId() + " | ") ;
+    	    
+    	    if(aff == 10) {
+    	    	System.out.println("Tamanho da coluna: " + (colunas.length - 1));
+    	    	csv_articles.close();
+    	    	System.exit(1);
+    	    }
+    		aff++;
+	    	
 	    }
 	    csv_articles.close();
 	    

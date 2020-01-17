@@ -9,7 +9,7 @@ import java.io.InputStreamReader;
 import org.wikipedia.miner.annotation.ArticleCleaner.SnippetLength;
 import org.wikipedia.miner.annotation.Disambiguator;
 import org.wikipedia.miner.annotation.TopicDetector;
-import org.wikipedia.miner.annotation.weighting.LinkDetector;
+
 import org.wikipedia.miner.db.WDatabase.DatabaseType;
 import org.wikipedia.miner.model.Wikipedia;
 import org.wikipedia.miner.util.ArticleSet;
@@ -17,7 +17,7 @@ import org.wikipedia.miner.util.ArticleSetBuilder;
 import org.wikipedia.miner.util.Result;
 import org.wikipedia.miner.util.WikipediaConfiguration;
 
-
+import mods.LinkDetectorMOD; //LinkDetector MODIFICADO
 import weka.classifiers.Classifier;
 import weka.core.Utils;
 
@@ -31,7 +31,7 @@ public class AnnotationWorkbench {
 	//classes for performing annotation
 	private Disambiguator _disambiguator ;
 	private TopicDetector _topicDetector ;
-	private LinkDetector _linkDetector ;
+	private LinkDetectorMOD _linkDetector ;
 	
 	//article set files
 	private File _artsTrain, _artsTestDisambig, _artsTestDetect ;
@@ -49,7 +49,7 @@ public AnnotationWorkbench(File dataDir, Wikipedia wikipedia) throws Exception {
 		
 		_disambiguator = new Disambiguator(_wikipedia) ;
 		_topicDetector = new TopicDetector(_wikipedia, _disambiguator) ;
-		_linkDetector = new LinkDetector(_wikipedia) ;
+		_linkDetector = new LinkDetectorMOD(_wikipedia) ;
 		
 		_artsTrain = new File(_dataDir.getPath() + "/articlesTrain.csv") ;
 		_artsTestDisambig = new File(_dataDir.getPath() + "/articlesTestDisambig.csv") ;
@@ -105,6 +105,7 @@ public AnnotationWorkbench(File dataDir, Wikipedia wikipedia) throws Exception {
     	if (!_arffDisambig.canRead() || !_arffDetect.canRead())
             throw new Exception("Arff files have not yet been created") ;
 		
+    	System.out.println("_disambiguator.loadTrainingData:");
         _disambiguator.loadTrainingData(_arffDisambig) ;
         if (configDisambig == null || configDisambig.trim().length() == 0) {
             _disambiguator.buildDefaultClassifier() ;
@@ -112,8 +113,10 @@ public AnnotationWorkbench(File dataDir, Wikipedia wikipedia) throws Exception {
             Classifier classifier = buildClassifierFromOptString(configDisambig) ;
             _disambiguator.buildClassifier(classifier) ;
         }
+        System.out.println("_disambiguator.saveClassifier:");
         _disambiguator.saveClassifier(_modelDisambig) ;
 		
+        System.out.println("_linkDetector.loadTrainingData:");
         _linkDetector.loadTrainingData(_arffDetect) ;
         if (configDetect == null || configDisambig.trim().length() == 0) {
             _linkDetector.buildDefaultClassifier() ;
@@ -121,6 +124,8 @@ public AnnotationWorkbench(File dataDir, Wikipedia wikipedia) throws Exception {
             Classifier classifier = buildClassifierFromOptString(configDisambig) ;
             _linkDetector.buildClassifier(classifier) ;
         }
+        
+        System.out.println("_linkDetector.saveClassifier:");
         _linkDetector.saveClassifier(_modelDetect) ;
     }
 

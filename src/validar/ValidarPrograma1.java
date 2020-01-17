@@ -15,9 +15,15 @@ import org.wikipedia.miner.util.WikipediaConfiguration;
 
 public class ValidarPrograma1 {
 	
+	//WikipediaConfiguration file
+	static String _conf = "/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml";
+	
+	//csv file folder
+	static String dirCsv = "/home/thalisson/Documents/WikiMiner/";
+	
 	public static void main(String[] args) throws Exception {
 		
-		WikipediaConfiguration conf = new WikipediaConfiguration(new File("/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml")) ;
+		WikipediaConfiguration conf = new WikipediaConfiguration(new File(_conf)) ;
 	    Wikipedia wikipedia = new Wikipedia(conf, false) ;
 	    WDatabase<Integer, DbPage> PageMap = wikipedia.getEnvironment().getDbPage();
 		WIterator<Integer, DbPage> PageMapIterator = PageMap.getIterator();
@@ -37,7 +43,7 @@ public class ValidarPrograma1 {
 	    }// STEP 1 -> Criando lista com os id's das pages do tipo Article
 	    PageMapIterator.close();
 	    
-	    Scanner csv_articles = new Scanner(new File("/home/thalisson/Documents/WikiMiner/csv_articles.csv"));
+	    Scanner csv_articles = new Scanner(new File(dirCsv + "csv_articles.csv"));
 	    csv_articles.nextLine(); // Pulando a primeira linha (Ela contém a coluna de id dos articles).
 	    int pageExistCount = 0;
 	    int pageArticleCount = 0;
@@ -56,8 +62,8 @@ public class ValidarPrograma1 {
 	    			//Coletando links que saem do article a partir do DB do wikipedia
 	    			Article[] linksOutArticle = ((Article) page).getLinksOut();
 	    			for(int i = 0; i < linksOutArticle.length; i++) 
-	    				if(Page.createPage(wikipedia.getEnvironment(), Integer.parseInt(linksOutArticle[i].toString().split(":")[0])).getType() == PageType.article)
-	    					linksOutDb.add(linksOutArticle[i].toString().split(":")[0]);
+	    				if(Page.createPage(wikipedia.getEnvironment(), linksOutArticle[i].getId()).getType() == PageType.article)
+	    					linksOutDb.add(Integer.toString(linksOutArticle[i].getId()));
 	    			//Coletando links que saem do article a partir do DB do wikipedia
 	    			
 	    			for(int i = 1; i < aux.length; i++) {
@@ -69,6 +75,9 @@ public class ValidarPrograma1 {
 	    				System.out.println(page.getId() + " | True");
 	    			} else {
 	    				System.err.println(page.getId() + " | False");
+	    				System.out.println("linksOutCsv: " );
+	    				for(int i = 0; i < linksOutCsv.size(); i++)
+	    					System.out.print(linksOutCsv.get(i) + " | ");
 	    				System.exit(1);
 	    			}
 

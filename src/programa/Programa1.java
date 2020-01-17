@@ -16,18 +16,23 @@ import org.wikipedia.miner.util.WikipediaConfiguration;
 
 public class Programa1  {
 	
+	//WikipediaConfiguration file
+	static String _conf = "/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml";
+	
+	//Folder to output the program files
+	static String _output = "/home/thalisson/Documents/WikiMiner/";
+	
+	
 	public static void main(String[] args) throws Exception {
 		
-		WikipediaConfiguration conf = new WikipediaConfiguration(new File("/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml")) ;
+		WikipediaConfiguration conf = new WikipediaConfiguration(new File(_conf)) ;
 	    Wikipedia wikipedia = new Wikipedia(conf, false) ;
 		WDatabase<Integer, DbPage> PageMap = wikipedia.getEnvironment().getDbPage();
 		WIterator<Integer, DbPage> PageMapIterator = PageMap.getIterator();
 		WIterator<Integer, DbPage> PageMapIterator2 = PageMap.getIterator();
 	    System.out.println("Iniciando...");
 
-	    PrintWriter csv_articles = new PrintWriter("/home/thalisson/Documents/WikiMiner/csv_articles.csv", "UTF-8");
-	    
-	    Map<Integer, String> artigos_dic = new HashMap<Integer, String>();
+	    PrintWriter csv_articles = new PrintWriter(_output + "csv_articles.csv", "UTF-8");
 	    
 	    //CRIANDO COLUNAS NO CSV
 	    ArrayList<String> colunas_list = new ArrayList<>();
@@ -37,7 +42,6 @@ public class Programa1  {
 	    		System.out.println(page.getId() + ". " + page.getTitle() + " | " + page.getType());
 	    		if(page.getType() == PageType.article) {
 	    			colunas_list.add(Integer.toString(page.getId()));
-	    			artigos_dic.put(page.getId(), page.getTitle());
 	    			csv_articles.print("," + page.getId());
 	    		}
 	    			
@@ -62,18 +66,10 @@ public class Programa1  {
 	    			
 	    			//VERIFICANDO SAIDAS DE LINKS
 	    			for(String id_coluna: colunas_list) {
-	    				boolean encontrado = false;
-	    				for(String id_linkOut: linksOut) {
-	    					if(id_coluna.equals(id_linkOut)) {
-	    						encontrado = true;
-	    						csv_articles.print("1,");
-	    						break;
-	    					}
-	    					
-	    				}
-	    				if(!encontrado) {
+	    				if(linksOut.contains(id_coluna))
+	    					csv_articles.print("1,");
+	    				else
 	    					csv_articles.print("0,");
-	    				}
 	    			}//VERIFICANDO SAIDAS DE LINKS
 	    			
 	    		}
