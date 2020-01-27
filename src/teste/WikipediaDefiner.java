@@ -15,7 +15,8 @@ public class WikipediaDefiner {
 		
 	    Wikipedia wikipedia = new Wikipedia(conf, false) ;
 	    
-	    Page page = Page.createPage(wikipedia.getEnvironment(), 764);
+	    Page page = Page.createPage(wikipedia.getEnvironment(), 14);
+	    //Page page = wikipedia.getArticleByTitle("Luke Skywalker");
 	    Article article = wikipedia.getArticleByTitle("Episode V") ;
 	    
 	    //TESTES
@@ -25,12 +26,18 @@ public class WikipediaDefiner {
 	    
 	    //ARTICLE1
 	    System.out.println("Page existe: " + page.exists());
+	    System.out.println("Page title: " + page.getTitle());
 	    System.out.println("Page id: " + page.getId()) ;
 	    System.out.println("Page type: " + page.getType());
-	    System.exit(1);
-	    System.out.println(page.getSentenceMarkup(0)) ;
+	    System.out.println(page.getFirstParagraphMarkup()) ;
 	    System.out.println("Links que sai do article: " + ((Article) page).getDistinctLinksOutCount());
+	    System.out.println("Verificar:\n\n");
 	    Article[] linksOut = ((Article) page).getLinksOut();
+	    for(int i = 0; i < 10; i++) {
+	    	System.out.println(linksOut[i].getTitle() + " | " + linksOut[i].getId());
+	    }
+	    System.exit(1);
+	    System.out.println("Links que sai do article: " + ((Article) page).getDistinctLinksOutCount());
 	    System.out.println("linksOut[0] " + linksOut[0]);
 	    System.out.println("linksOut[1] " + linksOut[1]);
 	    System.out.println("linksOut[2] " + linksOut[2]);

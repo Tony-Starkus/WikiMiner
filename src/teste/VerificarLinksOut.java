@@ -15,16 +15,17 @@ public class VerificarLinksOut {
 		WikipediaConfiguration conf = new WikipediaConfiguration(new File("/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml")) ;
 	    Wikipedia wikipedia = new Wikipedia(conf, false) ;
 		
-		int id_article = 535329;
+		int id_article = 5;
 		
 		Page article = Page.createPage(wikipedia.getEnvironment(), id_article);
 		System.out.println("Article existe: " + article.exists());
 		System.out.println("Links que sai do article: " + ((Article) article).getLinksOut().length);
 	    Article[] linksOut = ((Article) article).getLinksOut();
 	    for(int i = 0; i < linksOut.length; i++)
-	    	System.out.println(linksOut[i].getId() + " | ");
+	    	System.out.print(linksOut[i].getId() + " | ");
 	    	//System.out.println("linksOut["+ i +"] " + linksOut[i].toString() + "| Type: " + Page.createPage(wikipedia.getEnvironment(), linksOut[i].getId()).getType()) ;
 		
+	    System.exit(1);
 	    /*CHECAGEM*/
 	    System.out.println("Vamos lá...");
 	    System.out.println();

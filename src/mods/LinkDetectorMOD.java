@@ -27,7 +27,6 @@ import java.util.regex.*;
 import org.apache.log4j.Logger;
 import org.wikipedia.miner.annotation.*;
 import org.wikipedia.miner.annotation.ArticleCleaner.SnippetLength;
-import org.wikipedia.miner.annotation.preprocessing.DocumentPreprocessor;
 import org.wikipedia.miner.annotation.weighting.TopicWeighter;
 import org.wikipedia.miner.model.*;
 import org.wikipedia.miner.util.*;
@@ -55,6 +54,11 @@ public class LinkDetectorMOD extends TopicWeighter{
 	private Wikipedia wikipedia ;
 	private ArticleCleaner cleaner ;
 	
+	/*MOD*/
+	static String _output = "/home/thalisson/Documents/WikiMiner/";
+	PrintWriter detectMODFile;
+	/*MOD*/
+	
 	
 	private enum Attributes {occurances,maxDisambigConfidence,avgDisambigConfidence,relatednessToContext,relatednessToOtherTopics,maxLinkProbability,avgLinkProbability,generality,firstOccurance,lastOccurance,spread} ;
 	private Decider<Attributes, Boolean> decider ;
@@ -78,6 +82,10 @@ public class LinkDetectorMOD extends TopicWeighter{
 	public LinkDetectorMOD(Wikipedia wikipedia) throws Exception {
 		this.wikipedia = wikipedia ;
 		this.cleaner = new ArticleCleaner() ;
+		
+		/*MOD*/
+		detectMODFile = new PrintWriter(_output + "detectMOD.arff", "UTF-8");
+		/*MOD*/
 		
 		decider = (Decider<Attributes, Boolean>) new DeciderBuilder<Attributes>("LinkDisambiguator", Attributes.class)
 		.setDefaultAttributeTypeNumeric()
@@ -165,7 +173,7 @@ public class LinkDetectorMOD extends TopicWeighter{
 		int aux1 = 0;
 		for (Article art: articles) {
 			aux1++;
-			System.out.println("ID Article: "+art.getId() + " | snippetLength: " + snippetLength + " | td: " + td + " | rc: " + rc);
+			detectMODFile.println("ID Article: "+art.getId());
 			train(art, snippetLength, td, rc) ;
 			tracker.update() ;
 
@@ -185,9 +193,14 @@ public class LinkDetectorMOD extends TopicWeighter{
 	@SuppressWarnings("unchecked")
 	public void saveTrainingData(File file) throws Exception {
 		
+		/*MOD*/
+		detectMODFile.close();
+		/*MOD*/
+		
 		Logger.getLogger(LinkDetectorMOD.class).info("saving training data") ;
 		
 		dataset.save(file) ;
+		
 	}
 
 	/**
@@ -304,25 +317,22 @@ public class LinkDetectorMOD extends TopicWeighter{
 	}
 
 	private void train(Article article, SnippetLength snippetLength, TopicDetector td, RelatednessCache rc) throws Exception{
-		
+		/*MOD*/
 		String text = cleaner.getCleanedContent(article, snippetLength) ;
 		HashSet<Integer> groundTruth = getGroundTruth(article, snippetLength) ;
 		Collection<Topic> topics = td.getTopics(text, rc) ;
-		int aux2 = 0;
 		for (Topic topic: topics) {
 			Instance i = getInstance(topic, groundTruth.contains(topic.getId())) ;
 			/*ENCONTREI!!! i.toString(); mostra as linhas que aparecem no detect.arff*/
-			System.out.println("i: " + i.toString());
+			detectMODFile.println("i: " + i.toString());
 			dataset.add(i) ;
-			aux2++;
 		}
-		System.out.println("aux2: " + aux2);
-		System.out.println("topics size: " + topics.size());
+		detectMODFile.println("topics size: " + topics.size());
 		System.out.println("topics to string: " + topics.toString());
-		aux2 = 0;
 		/*O aux retorna diferentes valores. Significa que N linhas estão relacionadas a 1 article.
 		 * Todas as N linhas são escritas no detect.arff */
 		System.out.println("--------------------------------------------------------------------------------------");
+		detectMODFile.println("--------------------------------------------------------------------------------------");
 	}
 
 	private Result<Integer> test(Article article, SnippetLength snippetLength, TopicDetector td, RelatednessCache rc) throws Exception{
