@@ -7,8 +7,7 @@ import java.io.InputStreamReader;
 
 
 import org.wikipedia.miner.annotation.ArticleCleaner.SnippetLength;
-import org.wikipedia.miner.annotation.Disambiguator;
-import org.wikipedia.miner.annotation.TopicDetector;
+
 
 import org.wikipedia.miner.db.WDatabase.DatabaseType;
 import org.wikipedia.miner.model.Wikipedia;
@@ -17,11 +16,17 @@ import org.wikipedia.miner.util.ArticleSetBuilder;
 import org.wikipedia.miner.util.Result;
 import org.wikipedia.miner.util.WikipediaConfiguration;
 
+import annotationMOD.DisambiguatorMOD;
+import annotationMOD.TopicDetector;
 import mods.LinkDetectorMOD; //LinkDetector MODIFICADO
 import weka.classifiers.Classifier;
 import weka.core.Utils;
-
+/*VERSÃO MOD - MODIFICADO*/
 public class AnnotationWorkbench {
+	
+	/*MOD*/
+	String output_dir = "/home/thalisson/Documents/WikiMiner/";
+	/*MOD*/
 	
 	private Wikipedia _wikipedia ;
 	
@@ -29,7 +34,7 @@ public class AnnotationWorkbench {
 	private File _dataDir ;
 	
 	//classes for performing annotation
-	private Disambiguator _disambiguator ;
+	private DisambiguatorMOD _disambiguator ;
 	private TopicDetector _topicDetector ;
 	private LinkDetectorMOD _linkDetector ;
 	
@@ -47,9 +52,9 @@ public AnnotationWorkbench(File dataDir, Wikipedia wikipedia) throws Exception {
 		_dataDir = dataDir ;
 		_wikipedia = wikipedia ;
 		
-		_disambiguator = new Disambiguator(_wikipedia) ;
+		_disambiguator = new DisambiguatorMOD(_wikipedia) ;
 		_topicDetector = new TopicDetector(_wikipedia, _disambiguator) ;
-		_linkDetector = new LinkDetectorMOD(_wikipedia) ;
+		_linkDetector = new LinkDetectorMOD(_wikipedia, output_dir) ;
 		
 		_artsTrain = new File(_dataDir.getPath() + "/articlesTrain.csv") ;
 		_artsTestDisambig = new File(_dataDir.getPath() + "/articlesTestDisambig.csv") ;
@@ -87,7 +92,7 @@ public AnnotationWorkbench(File dataDir, Wikipedia wikipedia) throws Exception {
         ArticleSet trainingSet = new ArticleSet(_artsTrain, _wikipedia) ;
 		
         System.out.println("_disambiguator.train:");
-        _disambiguator.train(trainingSet, SnippetLength.full, datasetName + "_disambiguation", null) ;
+        _disambiguator.trainMOD(trainingSet, SnippetLength.full, datasetName + "_disambiguation", output_dir, null) ;
         System.out.println("_disambiguator.saveTrainingData:");
         _disambiguator.saveTrainingData(_arffDisambig) ;
         System.out.println("_disambiguator.buildDefaultClassifier:");

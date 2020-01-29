@@ -55,7 +55,6 @@ public class LinkDetectorMOD extends TopicWeighter{
 	private ArticleCleaner cleaner ;
 	
 	/*MOD*/
-	static String _output = "/home/thalisson/Documents/WikiMiner/";
 	PrintWriter detectMODFile;
 	/*MOD*/
 	
@@ -77,14 +76,15 @@ public class LinkDetectorMOD extends TopicWeighter{
 	 * link detector will be ready for use. Otherwise a model must be loaded, or a new one extracted from training data.
 	 * 
 	 * @param wikipedia an active wikipedia, ideally with label and pageLinkIn databases cached to memory
+	 * @param output_dir 
 	 * @throws Exception if there is a problem with the wikipedia database, or the detection model (if specified). 
 	 */
-	public LinkDetectorMOD(Wikipedia wikipedia) throws Exception {
+	public LinkDetectorMOD(Wikipedia wikipedia, String output_dir) throws Exception {
 		this.wikipedia = wikipedia ;
 		this.cleaner = new ArticleCleaner() ;
 		
 		/*MOD*/
-		detectMODFile = new PrintWriter(_output + "detectMOD.arff", "UTF-8");
+		detectMODFile = new PrintWriter(output_dir + "detectMOD.arff", "UTF-8");
 		/*MOD*/
 		
 		decider = (Decider<Attributes, Boolean>) new DeciderBuilder<Attributes>("LinkDisambiguator", Attributes.class)
@@ -152,6 +152,28 @@ public class LinkDetectorMOD extends TopicWeighter{
 		
 		return topicWeights ;
 	}
+	
+	/*MODIFICADO*/
+	public HashMap<Integer,Double> getTopicWeightsMOD(Collection<annotationMOD.Topic> topics) throws Exception {
+		
+		if (!decider.isReady()) 
+			throw new WekaException("You must build (or load) classifier first.") ;
+		
+		HashMap<Integer, Double> topicWeights = new HashMap<Integer, Double>() ;
+	
+		for (annotationMOD.Topic topic: topics) {
+		
+			Instance i = getInstanceMOD(topic, null) ;
+			
+			double prob = decider.getDecisionDistribution(i).get(true) ;
+			topicWeights.put(topic.getId(), prob) ;
+			
+			linksConsidered++ ;
+		}
+		
+		return topicWeights ;
+	}
+	/*MODIFICADO*/
 	
 	
 	/**
@@ -442,6 +464,155 @@ public class LinkDetectorMOD extends TopicWeighter{
 		
 		return ib.build() ;
 	}
+	
+	/*MODIFICADO*/
+	private Instance getInstanceMOD(annotationMOD.Topic topic, Boolean isValidLink) throws Exception {
+		
+		InstanceBuilder<Attributes,Boolean> ib = decider.getInstanceBuilder()
+		.setAttribute(Attributes.occurances, topic.getNormalizedOccurances())
+		.setAttribute(Attributes.maxDisambigConfidence, topic.getMaxDisambigConfidence())
+		.setAttribute(Attributes.avgDisambigConfidence, topic.getAverageDisambigConfidence())
+		.setAttribute(Attributes.relatednessToContext, topic.getRelatednessToContext())
+		.setAttribute(Attributes.relatednessToOtherTopics, topic.getRelatednessToOtherTopics())
+		.setAttribute(Attributes.maxLinkProbability, topic.getMaxLinkProbability())
+		.setAttribute(Attributes.avgLinkProbability, topic.getAverageLinkProbability())
+		.setAttribute(Attributes.generality, topic.getGenerality())
+		.setAttribute(Attributes.firstOccurance, topic.getFirstOccurance())
+		.setAttribute(Attributes.lastOccurance, topic.getLastOccurance())
+		.setAttribute(Attributes.spread, topic.getSpread()) ;
+		
+		if (isValidLink != null) 
+			ib = ib.setClassAttribute(isValidLink) ;
+		
+		return ib.build() ;
+	}
+	/*MODIFICADO*/
+	
+	/* MODIFICADO */
+	public void train(ArticleSet articles, SnippetLength snippetLength, String datasetName,
+			annotationMOD.TopicDetector td, RelatednessCache rc) throws Exception {
+		dataset = decider.createNewDataset();
+		
+		ProgressTracker tracker = new ProgressTracker(articles.size(), "training", LinkDetectorMOD.class) ;
+		int aux1 = 0;
+		for (Article art: articles) {
+			aux1++;
+			detectMODFile.println("ID Article: "+art.getId());
+			trainMOD(art, snippetLength, td, rc) ;
+			tracker.update() ;
+
+		}
+		
+		weightTrainingInstances() ;
+		System.out.println("aux1: " + aux1);
+		
+	}/* MODIFICADO */
+	
+	/* MODIFICADO */
+	private void trainMOD(Article article, SnippetLength snippetLength, annotationMOD.TopicDetector td, RelatednessCache rc) throws Exception {
+		/*MOD*/
+		String text = cleaner.getCleanedContent(article, snippetLength) ;
+		HashSet<Integer> groundTruth = getGroundTruth(article, snippetLength) ;
+		Collection<annotationMOD.Topic> topics = td.getTopics(text, rc) ;
+		for (annotationMOD.Topic topic: topics) {
+			Instance i = getInstanceMOD(topic, groundTruth.contains(topic.getId())) ;
+			/*ENCONTREI!!! i.toString(); mostra as linhas que aparecem no detect.arff*/
+			detectMODFile.println("i: " + i.toString());
+			dataset.add(i) ;
+		}
+		detectMODFile.println("topics size: " + topics.size());
+		System.out.println("topics to string: " + topics.toString());
+		/*O aux retorna diferentes valores. Significa que N linhas estão relacionadas a 1 article.
+		 * Todas as N linhas são escritas no detect.arff */
+		System.out.println("--------------------------------------------------------------------------------------");
+		detectMODFile.println("--------------------------------------------------------------------------------------");
+		
+	}/* MODIFICADO */
+
+	/*MODIFICADO - TESTES */
+	public Result<Integer> test(ArticleSet testSet, SnippetLength snippetLength, annotationMOD.TopicDetector td,
+			RelatednessCache rc) throws Exception {
+		if (!decider.isReady()) 
+			throw new Exception("You must build (or load) classifier first.") ;
+		
+		double worstRecall = 1 ;
+		double worstPrecision = 1 ;
+		
+		int articlesTested = 0 ;
+		int perfectRecall = 0 ;
+		int perfectPrecision = 0 ;
+
+		Result<Integer> r = new Result<Integer>() ;
+
+		ProgressTracker tracker = new ProgressTracker(testSet.size(), "Testing", LinkDetectorMOD.class) ;
+		for (Article art: testSet) {
+				
+			articlesTested ++ ;
+			
+			Result<Integer> ir = test(art, snippetLength, td, rc) ;
+			
+			if (ir.getRecall() ==1) perfectRecall++ ;
+			if (ir.getPrecision() == 1) perfectPrecision++ ;
+			
+			worstRecall = Math.min(worstRecall, ir.getRecall()) ;
+			worstPrecision = Math.min(worstPrecision, ir.getPrecision()) ;
+			
+			r.addIntermediateResult(ir) ;
+			
+			
+			tracker.update() ;
+		}
+
+		System.out.println("worstR:" + worstRecall + ", worstP:" + worstPrecision) ;
+		System.out.println("tested:" + articlesTested + ", perfectR:" + perfectRecall + ", perfectP:" + perfectPrecision) ;
+
+		return r ;
+	}/*MODIFICADO - TESTES */
+
+	private Result<Integer> test(Article article, SnippetLength snippetLength, annotationMOD.TopicDetector td,
+			RelatednessCache rc) throws Exception {
+		System.out.println(" - testing " + article) ;
+		
+		String text = cleaner.getCleanedContent(article, snippetLength) ;
+		
+		Collection<annotationMOD.Topic> topics = td.getTopics(text, rc) ;
+		
+		ArrayList<annotationMOD.Topic> weightedTopics = this.getWeightedTopicsMOD(topics) ;
+		
+		HashSet<Integer> linkedTopicIds = new HashSet<Integer>() ;
+		for (annotationMOD.Topic topic: weightedTopics) {
+			if (topic.getWeight() > 0.5) {
+				//we think this should be linked to
+				linkedTopicIds.add(topic.getId()) ;			
+			}
+		}
+
+		Result<Integer> result = new Result<Integer>(linkedTopicIds, getGroundTruth(article, snippetLength)) ;
+		System.out.println(" - " + result) ;
+		return result ;
+	}
+	
+	/* MODIFICADO */
+	private ArrayList<annotationMOD.Topic> getWeightedTopicsMOD(Collection<annotationMOD.Topic> topics) throws Exception {
+		HashMap<Integer,Double> topicWeights = getTopicWeightsMOD(topics) ;
+		
+		
+		ArrayList<annotationMOD.Topic> weightedTopics = new ArrayList<annotationMOD.Topic>() ;
+
+		for (annotationMOD.Topic topic: topics) {
+			
+			if (topicWeights.containsKey(topic.getId()))
+				topic.setWeight(topicWeights.get(topic.getId())) ;
+			else
+				topic.setWeight(0.0) ;
+				
+			weightedTopics.add(topic) ;
+		}
+		
+		Collections.sort(weightedTopics) ;
+		
+		return weightedTopics ;
+	}/* MODIFICADO */
 	
 	
 

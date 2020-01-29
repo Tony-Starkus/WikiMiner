@@ -18,7 +18,7 @@
  */
 
 
-package mods;
+package annotationMOD;
 
 import java.io.*;
 import java.sql.SQLException;
@@ -54,6 +54,10 @@ import weka.core.* ;
  *  @author David Milne
  */
 public class DisambiguatorMOD {
+	
+	/* MOD */
+	PrintWriter disambiguatorMODFile;
+	/* MOD */
 
 	private Wikipedia wikipedia ;
 	private ArticleCleaner cleaner ;
@@ -216,18 +220,24 @@ public class DisambiguatorMOD {
 	 * @param rc a cache in which relatedness measures will be saved so they aren't repeatedly calculated. Make this null if using extremely large training sets, so that caches will be reset from document to document, and won't grow too large.   
 	 * @throws Exception 
 	 */
-	public void train(ArticleSet articles, SnippetLength snippetLength, String datasetName, RelatednessCache rc) throws Exception{
-
+	public void trainMOD(ArticleSet articles, SnippetLength snippetLength, String datasetName, String output_dir, RelatednessCache rc) throws Exception{
+		/* MOD */
+		disambiguatorMODFile = new PrintWriter(output_dir + "disambigMOD.arff", "UTF-8");;
 		dataset = decider.createNewDataset();
-		
+		int aux = 1;
 		ProgressTracker pn = new ProgressTracker(articles.size(), "training", DisambiguatorMOD.class) ;
 		for (Article art: articles) {
-		
+			System.out.println("---------------------------------------------------------");
+			disambiguatorMODFile.println("---------------------------------------------------------");
+			System.out.println("art[" + aux + "] - " + art.toString());
+			disambiguatorMODFile.println("art[" + aux + "] - " + art.toString());
 			train(art, snippetLength, rc) ;	
 			pn.update() ;
+			aux++;
 		}
 		
 		weightTrainingInstances() ;
+		disambiguatorMODFile.close();
 		
 		//training data is very likely to be skewed. So lets resample to even out class values
 		//Resample resampleFilter = new Resample() ;
@@ -372,21 +382,33 @@ public class DisambiguatorMOD {
 		//Context context = new Context(unambigLabels, rc, maxContextSize) ;
 
 		//resolve ambiguous links
+		int aux_len1 = 0;
+		int aux_len2 = 0;
 		for (TopicReference ref: ambigRefs) {
+			aux_len1++;
 			for (Sense sense:ref.getLabel().getSenses()) {
-
+				aux_len2++;
 				if (sense.getPriorProbability() < minSenseProbability) break ;
-
+				
 				Instance i = decider.getInstanceBuilder()
 				.setAttribute(Attributes.commonness, sense.getPriorProbability())
 				.setAttribute(Attributes.relatedness, context.getRelatednessTo(sense))
 				.setAttribute(Attributes.contextQuality, (double)context.getQuality())
 				.setClassAttribute(sense.getId() ==ref.getTopicId())
 				.build() ;
-				
+				System.out.println("i: [" + sense.getId() + "]: " + i.toString());
+				disambiguatorMODFile.println("i: [" + sense.getId() + "]: " + i.toString());
+				if(Page.createPage(wikipedia.getEnvironment(), sense.getId()).exists()) {
+					System.out.println(sense.getId() + " Existe");
+				} else {
+					System.out.println(sense.getId() + " Nao existe");
+					System.exit(1);
+				}
 				dataset.add(i) ;
 			}
 		}
+		disambiguatorMODFile.println("aux_len1: " + aux_len1);
+		disambiguatorMODFile.println("aux_len2: " + aux_len2);
 	}
 
 	/**
