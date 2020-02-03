@@ -14,10 +14,10 @@ import org.wikipedia.miner.util.WikipediaConfiguration;
 public class Programa1Alternative  {
 	
 	//WikipediaConfiguration file
-	static String _conf = "/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml";
+	static String _conf = "C:\\Thalisson\\Wikification\\wikipedia-miner-starwars\\configs\\wikipedia-template-starwars.xml";
 	
 	//Folder to output the program files
-	static String _output = "/home/thalisson/Documents/WikiMiner/";
+	static String _output = "C:\\Thalisson\\Documentos\\WikiMiner";
 	
 	
 	public static void main(String[] args) throws Exception {
@@ -72,7 +72,7 @@ public class Programa1Alternative  {
 
 	    }//Criando Matriz
 	    articles_file.close();
-	    System.out.println("ConcluÃ­do");
+	    System.out.println("Concluído");
 	    
 	}
 	

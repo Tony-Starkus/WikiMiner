@@ -229,7 +229,7 @@ public class DisambiguatorMOD {
 		for (Article art: articles) {
 			System.out.println("---------------------------------------------------------");
 			disambiguatorMODFile.println("---------------------------------------------------------");
-			System.out.println("art[" + aux + "] - " + art.toString());
+			System.out.println("art[" + aux + "] ID: " + art.getId() + " | " + art.getTitle());
 			disambiguatorMODFile.println("art[" + aux + "] - " + art.toString());
 			train(art, snippetLength, rc) ;	
 			pn.update() ;
