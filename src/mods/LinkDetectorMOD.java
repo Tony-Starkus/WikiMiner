@@ -516,7 +516,7 @@ public class LinkDetectorMOD extends TopicWeighter{
 		for (Article art: articles) {
 			aux1++;
 			detectMODFile.println("art[" + aux1 + "] ID: " + art.getId() + " | " + art.getTitle());
-			System.out.println("art[" + aux1 + "] ID: " + art.getId() + " | " + art.getTitle());
+			//System.out.println("art[" + aux1 + "] ID: " + art.getId() + " | " + art.getTitle());
 			trainMOD(art, snippetLength, td, rc) ;
 			tracker.update() ;
 
@@ -540,10 +540,10 @@ public class LinkDetectorMOD extends TopicWeighter{
 			dataset.add(i) ;
 		}
 		detectMODFile.println("topics size: " + topics.size());
-		System.out.println("topics to string: " + topics.toString());
+		//System.out.println("topics to string: " + topics.toString());
 		/*O aux retorna diferentes valores. Significa que N linhas estão relacionadas a 1 article.
 		 * Todas as N linhas são escritas no detect.arff */
-		System.out.println("--------------------------------------------------------------------------------------");
+		//System.out.println("--------------------------------------------------------------------------------------");
 		detectMODFile.println("--------------------------------------------------------------------------------------");
 		
 	}/* MODIFICADO */

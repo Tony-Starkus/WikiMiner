@@ -21,7 +21,7 @@ import annotationMOD.TopicDetector;
 import mods.LinkDetectorMOD; //LinkDetector MODIFICADO
 import weka.classifiers.Classifier;
 import weka.core.Utils;
-/*VERSÃO MOD - MODIFICADO*/
+/*VERSÃO MOD - MODIFICADO - POSSÍVEL PROGRAMA 2*/
 public class AnnotationWorkbench {
 	
 	/*MOD*/
