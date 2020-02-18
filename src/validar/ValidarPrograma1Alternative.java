@@ -16,10 +16,10 @@ import org.wikipedia.miner.util.WikipediaConfiguration;
 public class ValidarPrograma1Alternative {
 	
 	//WikipediaConfiguration file
-	static String _conf = "C:\\Thalisson\\Wikification\\wikipedia-miner-starwars\\configs\\wikipedia-template-starwars.xml";
+	static String _conf = "/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml";
 	
 	//csv file folder
-	static String dirFile = "C:\\Thalisson\\Documentos\\WikiMiner\\";
+	static String dirFile = "/home/thalisson/Documents/WikiMiner/";
 	
 	public static void main(String[] args) throws Exception {
 		
@@ -43,8 +43,8 @@ public class ValidarPrograma1Alternative {
 	    }// STEP 1 -> Criando lista com os id's das pages do tipo Article
 	    PageMapIterator.close();
 	    
-	    Scanner csv_articles = new Scanner(new File(dirFile + "articles_file.txt"));
-	    csv_articles.nextLine(); // Pulando a primeira linha (Ela contém informação das colunas de cada linha).
+	    Scanner csv_articles = new Scanner(new File(dirFile + "articles_in-out-links_info.csv"));
+	    csv_articles.nextLine(); // Pulando a primeira linha (Ela contem informacoes das colunas de cada linha).
 	    int pageExistCount = 0;
 	    int pageArticleCount = 0;
 	    while(csv_articles.hasNextLine()) {
@@ -86,12 +86,12 @@ public class ValidarPrograma1Alternative {
 	    			}
 
 	    		} else {
-	    			System.err.println("A page " + line[0] + " não é Article!");
+	    			System.err.println("A page " + line[0] + " nao e Article!");
 	    			System.exit(1);
 	    		}
 	    		
 	    	} else {
-	    		System.err.println("A page " + line[0] + " não existe!");
+	    		System.err.println("A page " + line[0] + " nao existe!");
 	    		System.exit(1);
 	    	}//STEP 1
 	    	

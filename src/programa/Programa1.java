@@ -20,7 +20,7 @@ public class Programa1  {
 	static String _conf = "/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml";
 	
 	//Folder to output the program files
-	static String _output = "/home/thalisson/Documents/WikiMiner/";
+	static String _output_dir = "/home/thalisson/Documents/WikiMiner/";
 	
 	
 	public static void main(String[] args) throws Exception {
@@ -32,7 +32,7 @@ public class Programa1  {
 		WIterator<Integer, DbPage> PageMapIterator2 = PageMap.getIterator();
 	    System.out.println("Iniciando...");
 
-	    PrintWriter csv_articles = new PrintWriter(_output + "csv_articles.csv", "UTF-8");
+	    PrintWriter csv_articles = new PrintWriter(_output_dir + "csv_articles.csv", "UTF-8");
 	    
 	    //CRIANDO COLUNAS NO CSV
 	    ArrayList<String> colunas_list = new ArrayList<>();
