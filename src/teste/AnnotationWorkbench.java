@@ -18,8 +18,6 @@ import org.wikipedia.miner.util.WikipediaConfiguration;
 
 import annotationMOD.DisambiguatorMOD;
 import annotationMOD.TopicDetector;
-import mods.ArticleSetBuilderMOD;
-import mods.ArticleSetMOD;
 import mods.LinkDetectorMOD; //LinkDetector MODIFICADO
 import weka.classifiers.Classifier;
 import weka.core.Utils;
@@ -72,7 +70,7 @@ public AnnotationWorkbench(File dataDir, Wikipedia wikipedia) throws Exception {
 	private void gatherArticleSets() throws IOException{
 		int[] sizes = {200,100,100} ;
 
-        ArticleSetMOD[] articleSets = new ArticleSetBuilderMOD()
+        ArticleSet[] articleSets = new ArticleSetBuilder()
             .setMinOutLinks(25)
             .setMinInLinks(50)
             .setMaxListProportion(0.1)

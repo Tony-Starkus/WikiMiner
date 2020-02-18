@@ -549,7 +549,7 @@ public class LinkDetectorMOD extends TopicWeighter{
 	}/* MODIFICADO */
 
 	/*MODIFICADO - TESTES */
-	public Result<Integer> test(ArticleSetMOD testSet, SnippetLength snippetLength, annotationMOD.TopicDetector td,
+	public Result<Integer> test(ArticleSet testSet, SnippetLength snippetLength, annotationMOD.TopicDetector td,
 			RelatednessCache rc) throws Exception {
 		if (!decider.isReady()) 
 			throw new Exception("You must build (or load) classifier first.") ;

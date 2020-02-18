@@ -8,11 +8,10 @@ import java.util.Scanner;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.wikipedia.miner.model.Wikipedia;
+import org.wikipedia.miner.util.ArticleSet;
+import org.wikipedia.miner.util.ArticleSetBuilder;
 import org.wikipedia.miner.util.WikipediaConfiguration;
 import org.xml.sax.SAXException;
-
-import mods.ArticleSetBuilderMOD;
-import mods.ArticleSetMOD;
 
 public class Programa2 {
 	
@@ -35,7 +34,7 @@ public class Programa2 {
 	private void gatherArticleSets() throws IOException{
 		int[] sizes = {200,100,100} ;
 
-        ArticleSetMOD[] articleSets = new ArticleSetBuilderMOD()
+        ArticleSet[] articleSets = new ArticleSetBuilder()
             .setMinOutLinks(25)
             .setMinInLinks(50)
             .setMaxListProportion(0.1)
@@ -55,7 +54,7 @@ public class Programa2 {
 			return;
 		}
 		
-		ArticleSetMOD trainingSet = new ArticleSetMOD(_artsTrain, _wikipedia);
+		ArticleSet trainingSet = new ArticleSet(_artsTrain, _wikipedia);
            
 	}
 
