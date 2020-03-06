@@ -2,9 +2,13 @@ package teste;
 
 import java.io.File;
 
+import org.wikipedia.miner.db.WDatabase;
+import org.wikipedia.miner.db.WIterator;
+import org.wikipedia.miner.db.struct.DbPage;
 import org.wikipedia.miner.model.Article;
 import org.wikipedia.miner.model.Page;
 import org.wikipedia.miner.model.Wikipedia;
+import org.wikipedia.miner.model.Page.PageType;
 import org.wikipedia.miner.util.WikipediaConfiguration;
 
 public class WikipediaDefiner {
@@ -15,15 +19,39 @@ public class WikipediaDefiner {
 		
 	    Wikipedia wikipedia = new Wikipedia(conf, false) ;
 	    
-	    Page page = Page.createPage(wikipedia.getEnvironment(), 14);
+	    Page page = Page.createPage(wikipedia.getEnvironment(), 621478);
 	    //Page page = wikipedia.getArticleByTitle("Luke Skywalker");
-	    Article article = wikipedia.getArticleByTitle("Episode V") ;
+	    Article article = wikipedia.getArticleByTitle("Rahara Wick") ;
+	    
 	    
 	    //TESTES
-	    System.out.println("Root Category: " + wikipedia.getRootCategory());
-	    System.out.println("getPageById: " + wikipedia.getPageById(100));
+	    System.out.println("Page existe: " + page.exists());
+	    System.out.println("Page title: " + page.getTitle());
+	    System.out.println("Page id: " + page.getId()) ;
+	    System.out.println("Page type: " + page.getType());
+	    System.out.println("Links que sai do article: " + ((Article) page).getDistinctLinksOutCount());
+	    System.out.println(page.toString());
 	    //TESTES//
 	    
+	    /*
+	     * TESTE 1*/
+	    WDatabase<Integer, DbPage> PageMap = wikipedia.getEnvironment().getDbPage();
+		WIterator<Integer, DbPage> PageMapIterator = PageMap.getIterator();
+		int aux = 0;
+		while(PageMapIterator.hasNext()) {
+			Page page1 = Page.createPage(wikipedia.getEnvironment(), PageMapIterator.next().getKey());
+			if(page1.exists()) {
+				if(page1.getType() == PageType.article) {
+					if(((Article) page1).getDistinctLinksOutCount() >= 15 && ((Article) page1).getDistinctLinksInCount() >= 15) {
+						aux++;
+						System.out.println(aux);
+					}
+				}
+			}
+				
+		}
+	    System.out.println("aux: " + aux);
+	    System.exit(1);
 	    //ARTICLE1
 	    System.out.println("Page existe: " + page.exists());
 	    System.out.println("Page title: " + page.getTitle());

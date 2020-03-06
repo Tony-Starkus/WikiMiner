@@ -25,7 +25,7 @@ import weka.core.Utils;
 public class AnnotationWorkbench {
 	
 	/*MOD*/
-	String output_dir = "/home/thalisson/Documents/WikiMiner/";
+	String output_dir = "/home/thalisson/Programas/PIBIC/Wikification/AnnotationWorkbench";
 	/*MOD*/
 	
 	private Wikipedia _wikipedia ;
@@ -68,14 +68,11 @@ public AnnotationWorkbench(File dataDir, Wikipedia wikipedia) throws Exception {
 	}
 	
 	private void gatherArticleSets() throws IOException{
-		int[] sizes = {200,100,100} ;
+		int[] sizes = {9000,15,15} ;
 
         ArticleSet[] articleSets = new ArticleSetBuilder()
-            .setMinOutLinks(25)
-            .setMinInLinks(50)
-            .setMaxListProportion(0.1)
-            .setMinWordCount(1000)
-            .setMaxWordCount(2000)
+            .setMinOutLinks(15)
+            .setMinInLinks(15)
             .buildExclusiveSets(sizes, _wikipedia) ;
 		
         articleSets[0].save(_artsTrain) ;
@@ -166,7 +163,7 @@ public AnnotationWorkbench(File dataDir, Wikipedia wikipedia) throws Exception {
 
 	public static void main(String[] args) throws Exception {
 		
-		File dataDir = new File("/home/thalisson/Programas/PIBIC/Wikification/AnnotationWorkbench") ;
+		File dataDir = new File("/home/thalisson/Documents/WikiMiner/Programa2/") ;
 		
 		WikipediaConfiguration conf = new WikipediaConfiguration(new File("/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml")) ;
 		conf.addDatabaseToCache(DatabaseType.label) ;

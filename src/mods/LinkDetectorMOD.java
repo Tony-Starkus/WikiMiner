@@ -516,13 +516,14 @@ public class LinkDetectorMOD extends TopicWeighter{
 		for (Article art: articles) {
 			aux1++;
 			detectMODFile.println("art[" + aux1 + "] ID: " + art.getId() + " | " + art.getTitle());
-			//System.out.println("art[" + aux1 + "] ID: " + art.getId() + " | " + art.getTitle());
+			System.out.println("art[" + aux1 + "] ID: " + art.getId() + " | " + art.getTitle());
 			trainMOD(art, snippetLength, td, rc) ;
 			tracker.update() ;
 
 		}
 		
 		weightTrainingInstances() ;
+		detectMODFile.close();
 		System.out.println("aux1: " + aux1);
 		
 	}/* MODIFICADO */

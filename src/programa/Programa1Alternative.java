@@ -125,42 +125,61 @@ public class Programa1Alternative  {
 			return;
 		}
 			
-		PrintWriter articles_file;
+		PrintWriter articles_file, articles_train_id;
+		boolean createPrograma2Dir = new File(_output + "Programa2/").mkdir();
 		try {
 			articles_file = new PrintWriter(_output + "articles_in-out-links_info.csv", "UTF-8");
+				if(createPrograma2Dir)
+					articles_train_id = new PrintWriter(_output + "Programa2/articlesTrain_ID.csv", "UTF-8");
+				else {
+					System.err.println("Não foi possível criar o diretório para salvar arquivo que será utilizado pelo Programa2");
+					articles_file.close();
+					return;
+				}
 			articles_file.println("art_i,art_j,link");
 			
 			//Criando Matriz
 			int qtdIter = 0;
 			int artUpMedia = 0;
+			ArrayList<String> artsIgnorados = new ArrayList<>();
 			Scanner articles_id_links_file_done_scanner = new Scanner(new File(_output + "articles_id_links.csv"));
 			articles_id_links_file_done_scanner.nextLine(); // PULANDO PRIMEIRA LINHA
 			while(articles_id_links_file_done_scanner.hasNextLine()) {
 				qtdIter++;
 				String[] aux = articles_id_links_file_done_scanner.nextLine().split(",");
-				if(Integer.parseInt(aux[2]) >= _mediaOutLinks) {
+				if(Integer.parseInt(aux[1]) >= _mediaInLinks && Integer.parseInt(aux[2]) >= _mediaOutLinks) {
 					artUpMedia++;
 					Page page = Page.createPage(wikipedia.getEnvironment(), Integer.parseInt(aux[0]));
-					System.out.println(page.getId() + " | " + page.getTitle());
-	    			ArrayList<String> linksOut = new ArrayList<>();
-	    			Article[] linksOutArticle = ((Article) page).getLinksOut();
-	    			for(int i = 0; i < linksOutArticle.length; i++) {
-	    		    	String[] ids = linksOutArticle[i].toString().split(":");
-	    		    	linksOut.add(ids[0]);
-	    		    }
-	    			for(String id_coluna: _id_articles) {
-	    				if(linksOut.contains(id_coluna))
-	    					articles_file.println(page.getId() + "," + id_coluna + ",1");
-	    				else
-	    					articles_file.println(page.getId() + "," + id_coluna + ",0");
-	    			}
+					if(page.getMarkup() != null) {
+						System.out.println(page.getId() + " | " + page.getTitle());
+						articles_train_id.println(page.getId());
+		    			ArrayList<String> linksOut = new ArrayList<>();
+		    			Article[] linksOutArticle = ((Article) page).getLinksOut();
+		    			for(int i = 0; i < linksOutArticle.length; i++) {
+		    		    	String[] ids = linksOutArticle[i].toString().split(":");
+		    		    	linksOut.add(ids[0]);
+		    		    }
+		    			for(String id_coluna: _id_articles) {
+		    				if(linksOut.contains(id_coluna))
+		    					articles_file.println(page.getId() + "," + id_coluna + ",1");
+		    				else
+		    					articles_file.println(page.getId() + "," + id_coluna + ",0");
+		    			}
+					} else {
+						artsIgnorados.add(page.toString());
+					}
+					
 				}
 			}
 			articles_id_links_file_done_scanner.close();
 		    articles_file.close();
+		    articles_train_id.close();
 		    System.out.println("Quantidade de iterações: " + qtdIter);
 		    System.out.println("Articles dentro da média: " + artUpMedia);
 		    System.out.println("Concluído - [3] Criar Matriz.");
+		    if(artsIgnorados.size() != 0)
+		    	for(String page: artsIgnorados)
+		    		System.out.println(page);
 			
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block

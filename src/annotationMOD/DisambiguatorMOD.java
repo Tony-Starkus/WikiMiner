@@ -236,7 +236,7 @@ public class DisambiguatorMOD {
 		for (Article art: articles) {
 			//System.out.println("---------------------------------------------------------");
 			disambiguatorMODFile.println("---------------------------------------------------------");
-			//System.out.println("art[" + aux + "] ID: " + art.getId() + " | " + art.getTitle());
+			System.out.println("art[" + aux + "] ID: " + art.getId() + " | " + art.getTitle());
 			disambiguatorMODFile.println("art[" + aux + "] - " + art.toString());
 			train(art, snippetLength, rc) ;	
 			pn.update() ;
@@ -342,7 +342,7 @@ public class DisambiguatorMOD {
 
 		Vector<Label> unambigLabels = new Vector<Label>() ;
 		Vector<TopicReference> ambigRefs = new Vector<TopicReference>() ;
-
+		
 		String content = cleaner.getMarkupLinksOnly(article, snippetLength) ;
 
 		Pattern linkPattern = Pattern.compile("\\[\\[(.*?)\\]\\]") ; 
@@ -396,13 +396,13 @@ public class DisambiguatorMOD {
 			for (Sense sense:ref.getLabel().getSenses()) {
 				aux_len2++;
 				if (sense.getPriorProbability() < minSenseProbability) {
-					Instance i = decider.getInstanceBuilder()
+					/*Instance i = decider.getInstanceBuilder()
 							.setAttribute(Attributes.commonness, sense.getPriorProbability())
 							.setAttribute(Attributes.relatedness, context.getRelatednessTo(sense))
 							.setAttribute(Attributes.contextQuality, (double)context.getQuality())
 							.setClassAttribute(sense.getId() ==ref.getTopicId())
 							.build() ;
-					System.out.println("IGNORADO -> i: [" + sense.getId() + "]: " + i.toString());
+					System.out.println("IGNORADO -> i: [" + sense.getId() + "]: " + i.toString());*/
 					break ;
 				}
 				
@@ -414,12 +414,6 @@ public class DisambiguatorMOD {
 				.build() ;
 				//System.out.println("i: [" + sense.getId() + "]: " + i.toString());
 				disambiguatorMODFile.println("i: [" + sense.getId() + "]: " + i.toString());
-				/*if(Page.createPage(wikipedia.getEnvironment(), sense.getId()).exists()) {
-					System.out.println(sense.getId() + " Existe");
-				} else {
-					System.out.println(sense.getId() + " Nao existe");
-					System.exit(1);
-				}*/
 				dataset.add(i) ;
 			}
 		}
