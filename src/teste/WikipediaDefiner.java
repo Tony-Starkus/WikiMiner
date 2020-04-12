@@ -37,20 +37,27 @@ public class WikipediaDefiner {
 	     * TESTE 1*/
 	    WDatabase<Integer, DbPage> PageMap = wikipedia.getEnvironment().getDbPage();
 		WIterator<Integer, DbPage> PageMapIterator = PageMap.getIterator();
-		int aux = 0;
+		int totalArticles = 0;
+		int totalPages = 0;
 		while(PageMapIterator.hasNext()) {
 			Page page1 = Page.createPage(wikipedia.getEnvironment(), PageMapIterator.next().getKey());
 			if(page1.exists()) {
+				totalPages++;
 				if(page1.getType() == PageType.article) {
 					if(((Article) page1).getDistinctLinksOutCount() >= 15 && ((Article) page1).getDistinctLinksInCount() >= 15) {
-						aux++;
-						System.out.println(aux);
+						totalArticles++;
+						System.out.println(totalArticles);
 					}
 				}
+			} else {
+				System.err.println("Página não existe: " + page1.getId());
+				System.exit(1);
 			}
 				
 		}
-	    System.out.println("aux: " + aux);
+	    System.out.println("Total Article: " + totalArticles);
+	    System.out.println("Total Pages: " + totalPages);
+	    System.exit(1);
 	    System.exit(1);
 	    //ARTICLE1
 	    System.out.println("Page existe: " + page.exists());

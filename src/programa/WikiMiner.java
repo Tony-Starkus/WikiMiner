@@ -60,6 +60,9 @@ public class WikiMiner {
 	//Important variables
 	int _mediaInLinks; int _mediaOutLinks;
 	
+	//Article set id list
+	static ArrayList<Integer> _articlesSet_list;
+	
 	public WikiMiner(File dataDir, Wikipedia wikipedia) throws Exception {
 		
 		_dataDir = dataDir ;
@@ -98,15 +101,26 @@ public class WikiMiner {
 		file.close();
 	}
 	
+	public void loadArticlesSetList() {
+		Scanner file;
+		try {
+			file = new Scanner(new File(output_dir + "articlesSetID.csv"));
+			if(_articlesSet_list.size() > 0)
+				_articlesSet_list.clear();
+			while(file.hasNextLine()) {
+				int id = Integer.parseInt(file.nextLine());
+				_articlesSet_list.add(id);
+			}
+			file.close();
+			System.out.println("Tamanho da lista de articles: " + _articlesSet_list.size());
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private void createArticlesSet(Wikipedia wikipedia, WDatabase<Integer, DbPage> pageMap) throws IOException{
-		/* https://pt.khanacademy.org/math/probability/data-distributions-a1/summarizing-spread-distributions/a/calculating-standard-deviation-step-by-step
-	    Etapa 1: calcular a média.
-		Etapa 2: calcular o quadrado da distância entre cada ponto e a média.
-		Etapa 3: somar os valores da Etapa 2.
-		Etapa 4: dividir pelo número de pontos.
-		Etapa 5: calcular a raiz quadrada.
-		*/
-		ArrayList<Integer> articles_id_list = new ArrayList<>();
+		/* https://pt.khanacademy.org/math/probability/data-distributions-a1/summarizing-spread-distributions/a/calculating-standard-deviation-step-by-step */
+		ArrayList<Integer> articles_id_list_temp = new ArrayList<>();
 		WIterator<Integer, DbPage> IteratorMedia = pageMap.getIterator();
 		PrintWriter stats_csv = new PrintWriter(output_dir + "stats.csv", "UTF-8");
 		int totalInLinks = 0;
@@ -114,13 +128,11 @@ public class WikiMiner {
 	    int totalArticles = 0;
 	    int totalPages = 0;
 		while(IteratorMedia.hasNext()) {
-	    	int inLinks = 0;
-	    	int outLink = 0;
 	    	Page page = Page.createPage(wikipedia.getEnvironment(), IteratorMedia.next().getKey());
 	    	if(page.exists()) {
 	    		totalPages++;
 	    		if(page.getType() == PageType.article) {
-	    			articles_id_list.add(page.getId());
+	    			articles_id_list_temp.add(page.getId());
 		    		totalInLinks += ((Article) page).getDistinctLinksInCount();
 		    		totalOutLinks += ((Article) page).getDistinctLinksOutCount();
 		    		totalArticles++;
@@ -142,21 +154,65 @@ public class WikiMiner {
 	    stats_csv.close();
 	    loadVariables();
 	    
+	    //Criando csv com o id dos articles para treinamento
+	    System.out.println("Criando csv com o id dos articles: articlesSetID.csv");
+	    PrintWriter pwArticleSet = new PrintWriter(_artsTrain);
+	    int aux = 0;
+	    for(int id : articles_id_list_temp) {
+	    	Page page = Page.createPage(wikipedia.getEnvironment(), id);
+	    	if(page.exists())  {
+	    		if(page.getType() == PageType.article) {
+	    			if(((Article) page).getDistinctLinksInCount() >= _mediaInLinks && ((Article) page).getDistinctLinksOutCount() >= _mediaOutLinks)
+			    		pwArticleSet.println(page.getId());
+	    		} else {
+	    			System.err.println("Está página não é um article!");
+	    			System.exit(1);
+	    		}
+	    	} else {
+	    		System.err.println("Está página não existe!");
+	    		System.exit(1);
+	    	}
+	    }
+	    pwArticleSet.close();
+	    loadArticlesSetList();//Criando csv com o id dos articles para treinamento
 	    
-		/*int[] sizes = {200,100,100} ;
-
-        ArticleSet[] articleSets = new ArticleSetBuilder()
-            .setMinOutLinks(25)
-            .setMinInLinks(50)
-            .setMaxListProportion(0.1)
-            .setMinWordCount(1000)
-            .setMaxWordCount(2000)
-            .buildExclusiveSets(sizes, _wikipedia) ;
+    }
+	
+	private void createInOutLinksMatriz(Wikipedia wikipedia) throws FileNotFoundException {
+		if(_articlesSet_list.size() < 1) {
+			System.err.println("A lista de id de articles não está carregada!");
+			return;
+		}
+		PrintWriter matriz_file = new PrintWriter(output_dir + "matriz.csv");
 		
-        articleSets[0].save(_artsTrain) ;
-        articleSets[1].save(_artsTestDisambig) ;
-        articleSets[2].save(_artsTestDetect) ;*/
-	    
+		//Criando Matriz
+		int qtdIter = 0;
+		int artUpMedia = 0;
+		for(int id : _articlesSet_list) {
+			qtdIter++;
+			Page page = Page.createPage(wikipedia.getEnvironment(), id);
+			if(page.exists()) {
+				artUpMedia++;
+				System.out.println(page.getId() + " | " + page.getTitle());
+				ArrayList<String> linksOut = new ArrayList<>();
+    			Article[] linksOutArticle = ((Article) page).getLinksOut();
+    			for(int i = 0; i < linksOutArticle.length; i++) {
+    		    	String[] ids = linksOutArticle[i].toString().split(":");
+    		    	linksOut.add(ids[0]);
+    		    }
+    			for(int id_coluna: _articlesSet_list) {
+					if(linksOut.contains(Integer.toString(id_coluna)))
+    					matriz_file.println(page.getId() + "," + id_coluna + ",1");
+    				else
+    					matriz_file.println(page.getId() + "," + id_coluna + ",0");
+    			}
+			} else {
+				System.err.println("Página não existe: " + page.getId());
+			}
+		}
+		matriz_file.close();
+		System.out.println("qtdIter: " + qtdIter);
+		System.out.println("artUpMedia: " + artUpMedia);
     }
 	
     
@@ -164,6 +220,11 @@ public class WikiMiner {
     	
     	if (!_artsTrain.canRead()) 
             throw new Exception("Article sets have not yet been created") ;
+    	if(_articlesSet_list.size() < 1) {
+    		System.err.println("A lista de ID dos articles de treinamento não está carregado");
+    		return;
+    	}
+    		
 		
         ArticleSet trainingSet = new ArticleSet(_artsTrain, _wikipedia) ;
 		
@@ -181,6 +242,8 @@ public class WikiMiner {
     
     }
     
+    
+    
     private void createClassifiers(String configDisambig, String configDetect) throws Exception {
     	
     }
@@ -193,7 +256,7 @@ public class WikiMiner {
 		
 		File dataDir = new File(output_dir);
 		if(!dataDir.exists())
-			dataDir.mkdir();	
+			dataDir.mkdir();
 		
 		WikipediaConfiguration conf = new WikipediaConfiguration(new File("/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml")) ;
 		conf.addDatabaseToCache(DatabaseType.label) ;
@@ -203,7 +266,11 @@ public class WikiMiner {
 		
 		WikiMiner trainer = new WikiMiner(dataDir, wikipedia) ;
 		
-		if(new File(dataDir + "/stats.csv").exists())
+		_articlesSet_list = new ArrayList<>();
+		if(new File(output_dir + "articlesSetID.csv").exists())
+			trainer.loadArticlesSetList();
+		
+		if(new File(output_dir + "/stats.csv").exists())
 			trainer.loadVariables();
 		
 		//TESTES
@@ -214,7 +281,7 @@ public class WikiMiner {
 		while (true) {
 			System.out.println("What would you like to do?") ;
 			System.out.println(" - [1] Create Articles Train Set.") ;
-			System.out.println(" - [2] aff.") ;
+			System.out.println(" - [2] Create in/out links matriz") ;
 			System.out.println(" - [3] create classifiers.") ;
 			System.out.println(" - [4] evaluate classifiers.") ;
 			System.out.println(" - or ENTER to quit.") ;
@@ -237,12 +304,15 @@ public class WikiMiner {
 				trainer.createArticlesSet(wikipedia, PageMap);
 				break ;
 			case 2:
+				trainer.createInOutLinksMatriz(wikipedia);
+				break;
+			case 3:
 				System.out.println("Dataset name:") ;
 				String datasetName = input.readLine() ;
 				trainer.createArffFiles(datasetName);;
 				
 				break ;
-			case 3:
+			case 4:
 				System.out.println("Disambiguation classifer config (or ENTER to use default):") ;
 				String configDisambig = input.readLine() ;
 				
@@ -251,7 +321,7 @@ public class WikiMiner {
 				
 				trainer.createClassifiers(configDisambig, configDetect) ;
 				break ;
-			case 4:
+			case 5:
 				trainer.evaluate() ;
 				break ;
 			default:
