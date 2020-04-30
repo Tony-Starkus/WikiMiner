@@ -243,14 +243,7 @@ public class WikiMiner {
     }
     
     
-    
-    private void createClassifiers(String configDisambig, String configDetect) throws Exception {
-    	
-    }
 
-    private void evaluate() throws Exception {
-    
-    }
 
 	public static void main(String[] args) throws Exception {
 		
@@ -282,8 +275,7 @@ public class WikiMiner {
 			System.out.println("What would you like to do?") ;
 			System.out.println(" - [1] Create Articles Train Set.") ;
 			System.out.println(" - [2] Create in/out links matriz") ;
-			System.out.println(" - [3] create classifiers.") ;
-			System.out.println(" - [4] evaluate classifiers.") ;
+			System.out.println(" - [3] create arff files.") ;
 			System.out.println(" - or ENTER to quit.") ;
 			
 			String line = input.readLine() ;
@@ -310,19 +302,6 @@ public class WikiMiner {
 				System.out.println("Dataset name:") ;
 				String datasetName = input.readLine() ;
 				trainer.createArffFiles(datasetName);;
-				
-				break ;
-			case 4:
-				System.out.println("Disambiguation classifer config (or ENTER to use default):") ;
-				String configDisambig = input.readLine() ;
-				
-				System.out.println("Detection classifer config (or ENTER to use default):") ;
-				String configDetect = input.readLine() ;
-				
-				trainer.createClassifiers(configDisambig, configDetect) ;
-				break ;
-			case 5:
-				trainer.evaluate() ;
 				break ;
 			default:
 				System.out.println("Invalid Input") ;
