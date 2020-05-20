@@ -1,6 +1,9 @@
 package teste;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Scanner;
 
 import org.wikipedia.miner.db.WDatabase;
 import org.wikipedia.miner.db.WIterator;
@@ -19,10 +22,16 @@ public class WikipediaDefiner {
 		
 	    Wikipedia wikipedia = new Wikipedia(conf, false) ;
 	    
+	   
+	    Page article = Page.createPage(wikipedia.getEnvironment(), 621522);
+	    System.out.println(article.getTitle());
+	    System.out.println(article.getMarkup());
+	    System.exit(1);
+	    
+	    
 	    Page page = Page.createPage(wikipedia.getEnvironment(), 621478);
 	    //Page page = wikipedia.getArticleByTitle("Luke Skywalker");
-	    Article article = wikipedia.getArticleByTitle("Rahara Wick") ;
-	    
+	    Article article1 = wikipedia.getArticleByTitle("Rahara Wick") ;
 	    
 	    //TESTES
 	    System.out.println("Page existe: " + page.exists());
