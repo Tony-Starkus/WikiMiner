@@ -236,7 +236,7 @@ public class DisambiguatorMOD {
 		for (Article art: articles) {
 			//System.out.println("---------------------------------------------------------");
 			disambiguatorMODFile.println("---------------------------------------------------------");
-			System.out.println("art[" + aux + "] ID: " + art.getId() + " | " + art.getTitle());
+			System.out.println("Disambiguator - art[" + aux + "] ID: " + art.getId() + " | " + art.getTitle());
 			disambiguatorMODFile.println("art[" + aux + "] - " + art.toString());
 			train(art, snippetLength, rc) ;	
 			pn.update() ;
@@ -395,16 +395,16 @@ public class DisambiguatorMOD {
 			aux_len1++;
 			for (Sense sense:ref.getLabel().getSenses()) {
 				aux_len2++;
-				/*if (sense.getPriorProbability() < minSenseProbability) {
-					Instance i = decider.getInstanceBuilder()
+				if (sense.getPriorProbability() < minSenseProbability) {
+					/*Instance i = decider.getInstanceBuilder()
 							.setAttribute(Attributes.commonness, sense.getPriorProbability())
 							.setAttribute(Attributes.relatedness, context.getRelatednessTo(sense))
 							.setAttribute(Attributes.contextQuality, (double)context.getQuality())
 							.setClassAttribute(sense.getId() ==ref.getTopicId())
 							.build() ;
-					System.out.println("IGNORADO -> i: [" + sense.getId() + "]: " + i.toString());
+					System.out.println("IGNORADO -> i: [" + sense.getId() + "]: " + i.toString());*/
 					break ;
-				}*/
+				}
 				
 				Instance i = decider.getInstanceBuilder()
 				.setAttribute(Attributes.commonness, sense.getPriorProbability())

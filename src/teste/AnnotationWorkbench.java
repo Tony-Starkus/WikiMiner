@@ -96,7 +96,7 @@ public AnnotationWorkbench(File dataDir, Wikipedia wikipedia) throws Exception {
         _disambiguator.buildDefaultClassifier();
 		
         System.out.println("_linkDetector.train:");
-        _linkDetector.train(trainingSet, SnippetLength.full, datasetName + "_detection", _topicDetector, null) ;
+        //_linkDetector.train(trainingSet, SnippetLength.full, datasetName + "_detection", _topicDetector, null) ;
         System.out.println("_linkDetector.saveTrainingData:");
         _linkDetector.saveTrainingData(_arffDetect) ;
     

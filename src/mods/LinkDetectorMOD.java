@@ -55,7 +55,7 @@ public class LinkDetectorMOD extends TopicWeighter{
 	private ArticleCleaner cleaner ;
 	
 	/*MOD*/
-	PrintWriter detectMODFile;
+	PrintWriter prwParesFeatures;
 	/*MOD*/
 	
 	
@@ -82,10 +82,6 @@ public class LinkDetectorMOD extends TopicWeighter{
 	public LinkDetectorMOD(Wikipedia wikipedia, String output_dir) throws Exception {
 		this.wikipedia = wikipedia ;
 		this.cleaner = new ArticleCleaner() ;
-		
-		/*MOD*/
-		detectMODFile = new PrintWriter(output_dir + "detectMOD.arff", "UTF-8");
-		/*MOD*/
 		
 		decider = (Decider<Attributes, Boolean>) new DeciderBuilder<Attributes>("LinkDisambiguator", Attributes.class)
 		.setDefaultAttributeTypeNumeric()
@@ -217,7 +213,7 @@ public class LinkDetectorMOD extends TopicWeighter{
 	public void saveTrainingData(File file) throws Exception {
 		
 		/*MOD*/
-		detectMODFile.close();
+		prwParesFeatures.close();
 		/*MOD*/
 		
 		Logger.getLogger(LinkDetectorMOD.class).info("saving training data") ;
@@ -349,15 +345,13 @@ public class LinkDetectorMOD extends TopicWeighter{
 			/*ENCONTREI!!! i.toString(); mostra as linhas que aparecem no detect.arff*/
 			System.out.println("i[" + topic.getId() + "]: " + i.toString());
 			System.out.println("1: " + topic.getId() + " | " + topic.getTitle());
-			detectMODFile.println("i[" + topic.getId() + "]: " + i.toString());
+			prwParesFeatures.println("i[" + topic.getId() + "]: " + i.toString());
 			System.exit(1);
 			dataset.add(i) ;
 		}
-		detectMODFile.println("topics size: " + topics.size());
 		//System.out.println("topics to string: " + topics.toString());
 		/* Todas as N linhas são escritas no detect.arff */
 		System.out.println("--------------------------------------------------------------------------------------");
-		detectMODFile.println("--------------------------------------------------------------------------------------");
 	}
 
 	private Result<Integer> test(Article article, SnippetLength snippetLength, TopicDetector td, RelatednessCache rc) throws Exception{
@@ -472,17 +466,17 @@ public class LinkDetectorMOD extends TopicWeighter{
 	private Instance getInstanceMOD(annotationMOD.Topic topic, Boolean isValidLink) throws Exception {
 		
 		InstanceBuilder<Attributes,Boolean> ib = decider.getInstanceBuilder()
-		.setAttribute(Attributes.occurances, topic.getNormalizedOccurances())
-		.setAttribute(Attributes.maxDisambigConfidence, topic.getMaxDisambigConfidence())
-		.setAttribute(Attributes.avgDisambigConfidence, topic.getAverageDisambigConfidence())
-		.setAttribute(Attributes.relatednessToContext, topic.getRelatednessToContext())
-		.setAttribute(Attributes.relatednessToOtherTopics, topic.getRelatednessToOtherTopics())
-		.setAttribute(Attributes.maxLinkProbability, topic.getMaxLinkProbability())
-		.setAttribute(Attributes.avgLinkProbability, topic.getAverageLinkProbability())
-		.setAttribute(Attributes.generality, topic.getGenerality())
-		.setAttribute(Attributes.firstOccurance, topic.getFirstOccurance())
-		.setAttribute(Attributes.lastOccurance, topic.getLastOccurance())
-		.setAttribute(Attributes.spread, topic.getSpread()) ;
+				.setAttribute(Attributes.occurances, topic.getNormalizedOccurances())
+				.setAttribute(Attributes.maxDisambigConfidence, topic.getMaxDisambigConfidence())
+				.setAttribute(Attributes.avgDisambigConfidence, topic.getAverageDisambigConfidence())
+				.setAttribute(Attributes.relatednessToContext, topic.getRelatednessToContext())
+				.setAttribute(Attributes.relatednessToOtherTopics, topic.getRelatednessToOtherTopics())
+				.setAttribute(Attributes.maxLinkProbability, topic.getMaxLinkProbability())
+				.setAttribute(Attributes.avgLinkProbability, topic.getAverageLinkProbability())
+				.setAttribute(Attributes.generality, topic.getGenerality())
+				.setAttribute(Attributes.firstOccurance, topic.getFirstOccurance())
+				.setAttribute(Attributes.lastOccurance, topic.getLastOccurance())
+				.setAttribute(Attributes.spread, topic.getSpread()) ;
 		
 		if (isValidLink != null) 
 			ib = ib.setClassAttribute(isValidLink) ;
@@ -493,59 +487,70 @@ public class LinkDetectorMOD extends TopicWeighter{
 	
 	/* MODIFICADO */
 	public void train(ArticleSet articles, SnippetLength snippetLength, String datasetName,
-			annotationMOD.TopicDetector td, RelatednessCache rc) throws Exception {
+			annotationMOD.TopicDetector td, File _paresFeatures, RelatednessCache rc) throws Exception {
+		prwParesFeatures = new PrintWriter(_paresFeatures, "UTF-8");
 		dataset = decider.createNewDataset();
-		detectMODFile.println("@relation LinkDisambiguator\n" + 
-				"\n" + 
-				"@attribute occurances numeric\n" + 
-				"@attribute maxDisambigConfidence numeric\n" + 
-				"@attribute avgDisambigConfidence numeric\n" + 
-				"@attribute relatednessToContext numeric\n" + 
-				"@attribute relatednessToOtherTopics numeric\n" + 
-				"@attribute maxLinkProbability numeric\n" + 
-				"@attribute avgLinkProbability numeric\n" + 
-				"@attribute generality numeric\n" + 
-				"@attribute firstOccurance numeric\n" + 
-				"@attribute lastOccurance numeric\n" + 
-				"@attribute spread numeric\n" + 
-				"@attribute isValidLink {TRUE,FALSE}\n" + 
-				"\n" + 
-				"@data");
+		prwParesFeatures.println(
+				"id_articleA," + 
+				"id_articleB," + 
+				"occurances," + 
+				"maxDisambigConfidence," + 
+				"avgDisambigConfidence," + 
+				"relatednessToContext," + 
+				"relatednessToOtherTopics," + 
+				"maxLinkProbability," + 
+				"avgLinkProbability," + 
+				"firstOccurance numeric," + 
+				"lastOccurance," + 
+				"spread," + 
+				"isValidLink");
 		ProgressTracker tracker = new ProgressTracker(articles.size(), "training", LinkDetectorMOD.class) ;
 		int aux1 = 0;
 		for (Article art: articles) {
 			aux1++;
-			detectMODFile.println("art[" + aux1 + "] ID: " + art.getId() + " | " + art.getTitle());
 			System.out.println("art[" + aux1 + "] ID: " + art.getId() + " | " + art.getTitle());
-			trainMOD(art, snippetLength, td, rc) ;
+			trainMOD(art, snippetLength, td, rc, articles) ;
 			tracker.update() ;
 
 		}
 		
 		weightTrainingInstances() ;
-		detectMODFile.close();
+		prwParesFeatures.close();
 		System.out.println("aux1: " + aux1);
 		
 	}/* MODIFICADO */
 	
 	/* MODIFICADO */
-	private void trainMOD(Article article, SnippetLength snippetLength, annotationMOD.TopicDetector td, RelatednessCache rc) throws Exception {
+	private void trainMOD(Article article, SnippetLength snippetLength, annotationMOD.TopicDetector td, RelatednessCache rc, ArticleSet articles) throws Exception {
 		/*MOD*/
 		String text = cleaner.getCleanedContent(article, snippetLength) ;
 		HashSet<Integer> groundTruth = getGroundTruth(article, snippetLength) ;
 		Collection<annotationMOD.Topic> topics = td.getTopics(text, rc) ;
 		for (annotationMOD.Topic topic: topics) {
-			Instance i = getInstanceMOD(topic, groundTruth.contains(topic.getId())) ;
-			/*ENCONTREI!!! i.toString(); mostra as linhas que aparecem no detect.arff*/
+			if(articles.contains(new Article(article.getEnvironment(), topic.getId()))) { //Verificando se o tópico pertence à um article do grafo
+				Instance i = getInstanceMOD(topic, groundTruth.contains(topic.getId())) ;
+				//System.out.println(i);
+				String aux = "";
+				for (int j = 0; j < i.toString().split(",").length; j++) {
+					if(j != 7)
+						if(j != 11)
+							aux += i.toString().split(",")[j] + ",";
+						else
+							aux += i.toString().split(",")[j];
+				}
+				prwParesFeatures.println(article.getId() + "," + topic.getId() + "," + aux);
+				dataset.add(i);
+			}
+			
+			/*Instance i = getInstanceMOD(topic, groundTruth.contains(topic.getId())) ;
+			ENCONTREI!!! i.toString(); mostra as linhas que aparecem no detect.arff
 			detectMODFile.println("i[" + topic.getId() + "]: " + i.toString());
-			dataset.add(i) ;
+			dataset.add(i) ;*/
 		}
-		detectMODFile.println("topics size: " + topics.size());
 		//System.out.println("topics to string: " + topics.toString());
 		/*O aux retorna diferentes valores. Significa que N linhas estão relacionadas a 1 article.
 		 * Todas as N linhas são escritas no detect.arff */
 		//System.out.println("--------------------------------------------------------------------------------------");
-		detectMODFile.println("--------------------------------------------------------------------------------------");
 		
 	}/* MODIFICADO */
 

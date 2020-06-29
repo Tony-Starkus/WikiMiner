@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Scanner;
 
@@ -25,6 +27,7 @@ import org.wikipedia.miner.util.WikipediaConfiguration;
 
 import annotationMOD.DisambiguatorMOD;
 import annotationMOD.TopicDetector;
+import annotationMOD.TopicDetector.DisambiguationPolicy;
 import mods.LinkDetectorMOD; //LinkDetector MODIFICADO
 import weka.classifiers.Classifier;
 import weka.core.Utils;
@@ -47,6 +50,8 @@ public class WikiMiner {
 	
 	//article set files
 	private File _artsTrain, _artsTestDisambig, _artsTestDetect ;
+	//MOD
+	private File _artigosFeatures, _paresFeatures;
 	
 	//feature data files
 	private File _arffDisambig, _arffDetect ;
@@ -83,6 +88,12 @@ public class WikiMiner {
 		_modelDetect = new File(_dataDir.getPath() + "/detect.model") ;
 		
 		_statsCsv = new File(_dataDir.getPath() + "/stats.csv");
+		
+		//MOD
+		_topicDetector.setDisambiguationPolicy(DisambiguationPolicy.STRICT);
+		_artigosFeatures = new File(_dataDir.getPath() + "/artigos-features.csv");
+		_paresFeatures = new File(_dataDir.getPath() + "/pares-features.csv");
+		
 	}
 	
 	public void loadVariables() throws FileNotFoundException {
@@ -162,8 +173,13 @@ public class WikiMiner {
 	    	Page page = Page.createPage(wikipedia.getEnvironment(), id);
 	    	if(page.exists())  {
 	    		if(page.getType() == PageType.article) {
-	    			if(((Article) page).getDistinctLinksInCount() >= _mediaInLinks && ((Article) page).getDistinctLinksOutCount() >= _mediaOutLinks)
-			    		pwArticleSet.println(page.getId());
+	    			if(((Article) page).getDistinctLinksInCount() >= _mediaInLinks && ((Article) page).getDistinctLinksOutCount() >= _mediaOutLinks) {
+	    				pwArticleSet.println(page.getId());
+		    			aux++;
+		    			if(aux == 3000)
+		    				break;
+	    			}
+			    		
 	    		} else {
 	    			System.err.println("Está página não é um article!");
 	    			System.exit(1);
@@ -173,21 +189,24 @@ public class WikiMiner {
 	    		System.exit(1);
 	    	}
 	    }
+	    System.out.println("aux: " + aux);
 	    pwArticleSet.close();
 	    loadArticlesSetList();//Criando csv com o id dos articles para treinamento
 	    
     }
 	
-	private void createInOutLinksMatriz(Wikipedia wikipedia) throws FileNotFoundException {
+	private void createGrafo(Wikipedia wikipedia) throws FileNotFoundException {
 		if(_articlesSet_list.size() < 1) {
 			System.err.println("A lista de id de articles não está carregada!");
 			return;
 		}
-		PrintWriter matriz_file = new PrintWriter(output_dir + "matriz.csv");
+		PrintWriter matriz_file = new PrintWriter(output_dir + "grafo.csv");
 		
 		//Criando Matriz
 		int qtdIter = 0;
 		int artUpMedia = 0;
+		int lines = 0;
+		int positivos = 0;
 		for(int id : _articlesSet_list) {
 			qtdIter++;
 			Page page = Page.createPage(wikipedia.getEnvironment(), id);
@@ -201,22 +220,58 @@ public class WikiMiner {
     		    	linksOut.add(ids[0]);
     		    }
     			for(int id_coluna: _articlesSet_list) {
-					if(linksOut.contains(Integer.toString(id_coluna)))
-    					matriz_file.println(page.getId() + "," + id_coluna + ",1");
-    				else
-    					matriz_file.println(page.getId() + "," + id_coluna + ",0");
+					if(linksOut.contains(Integer.toString(id_coluna))) {
+						positivos += 1;
+						matriz_file.println(page.getId() + "," + id_coluna + ",1");
+						lines += 1;
+					} else {
+						matriz_file.println(page.getId() + "," + id_coluna + ",0");
+						lines += 1;
+					}
+    					
     			}
 			} else {
 				System.err.println("Página não existe: " + page.getId());
+				System.exit(1);
 			}
 		}
 		matriz_file.close();
 		System.out.println("qtdIter: " + qtdIter);
 		System.out.println("artUpMedia: " + artUpMedia);
+		System.out.println("lines: " + lines);
+		System.out.println("Links True: " + positivos);
     }
 	
+	
+	private void articlesFeature(Wikipedia wikipedia) throws IOException, Exception {
+		if(_articlesSet_list.size() < 1) {
+			System.err.println("A lista de id de articles não está carregada!");
+			return;
+		}
+		long totalLinkCount = wikipedia.getEnvironment().getDbPageLinkCounts().getDatabaseSize();
+		if(!_artigosFeatures.exists()) {
+			_artigosFeatures.createNewFile();
+		}
+		
+		PrintWriter articlesFeaturePw = new PrintWriter(_artigosFeatures);
+		articlesFeaturePw.println("id_artigo,titulo,inlink_ratio,outlink_ratio");
+		for(int id: _articlesSet_list) {
+			Page page = Page.createPage(wikipedia.getEnvironment(), id);
+			if(page.exists() && page.getType() == PageType.article) {
+				Article article = new Article(wikipedia.getEnvironment(), page.getId());
+				double inlink_ratio = (double) article.getTotalLinksInCount() / (double) totalLinkCount;
+				double outlink_ratio = (double) article.getTotalLinksOutCount() / (double) totalLinkCount;
+				BigDecimal bgdIN = new BigDecimal(Double.toString(inlink_ratio));
+				BigDecimal bgdOUT = new BigDecimal(Double.toString(outlink_ratio));
+				articlesFeaturePw.println(id + ",\"" + page.getTitle() + "\"," + bgdIN.setScale(6, RoundingMode.HALF_UP) + "," + bgdOUT.setScale(6, RoundingMode.HALF_UP));
+			} else {
+				System.err.println("Page exist: " + page.exists() + "| PageType: " + page.getType() +" | Page ID: " + page.getId());
+			}
+		}
+		articlesFeaturePw.close();
+	}
     
-    private void createArffFiles(String datasetName) throws IOException, Exception {
+    private void createParesFeatures(String datasetName) throws IOException, Exception {
     	
     	if (!_artsTrain.canRead()) 
             throw new Exception("Article sets have not yet been created") ;
@@ -225,24 +280,57 @@ public class WikiMiner {
     		return;
     	}
     		
-		
         ArticleSet trainingSet = new ArticleSet(_artsTrain, _wikipedia) ;
-		
-        System.out.println("_disambiguator.train:");
-        _disambiguator.trainMOD(trainingSet, SnippetLength.full, datasetName + "_disambiguation", output_dir, null) ;
-        System.out.println("_disambiguator.saveTrainingData:");
-        _disambiguator.saveTrainingData(_arffDisambig) ;
-        System.out.println("_disambiguator.buildDefaultClassifier:");
-        _disambiguator.buildDefaultClassifier();
+		if(new File("/home/thalisson/Documents/WikiMiner/disambig.model").exists()) {
+			System.out.println("Construindo disambiguator de model já existente");
+			_disambiguator.loadClassifier(new File("/home/thalisson/Documents/WikiMiner/disambig.model"));
+			System.out.println("Construção concluída");
+		} else {
+			System.out.println("_disambiguator.train:");
+	        _disambiguator.trainMOD(trainingSet, SnippetLength.full, datasetName + "_disambiguation", output_dir, null) ;
+	        System.out.println("_disambiguator.saveTrainingData:");
+	        _disambiguator.saveTrainingData(_arffDisambig) ;
+	        System.out.println("_disambiguator.buildDefaultClassifier:");
+	        _disambiguator.buildDefaultClassifier();
+		}
 		
         System.out.println("_linkDetector.train:");
-        _linkDetector.train(trainingSet, SnippetLength.full, datasetName + "_detection", _topicDetector, null) ;
+        _linkDetector.train(trainingSet, SnippetLength.full, datasetName + "_detection", _topicDetector, _paresFeatures, null) ;
         System.out.println("_linkDetector.saveTrainingData:");
         _linkDetector.saveTrainingData(_arffDetect) ;
     
     }
     
-    
+    private void createClassifiers(String configDisambig, String configDetect) throws Exception {
+		
+        if (!_arffDisambig.canRead() || !_arffDetect.canRead())
+            throw new Exception("Arff files have not yet been created") ;
+		
+        _disambiguator.loadTrainingData(_arffDisambig) ;
+        if (configDisambig == null || configDisambig.trim().length() == 0) {
+            _disambiguator.buildDefaultClassifier() ;
+        } else {
+            Classifier classifier = buildClassifierFromOptString(configDisambig) ;
+            _disambiguator.buildClassifier(classifier) ;
+        }
+        _disambiguator.saveClassifier(_modelDisambig) ;
+		
+        _linkDetector.loadTrainingData(_arffDetect) ;
+        if (configDetect == null || configDisambig.trim().length() == 0) {
+            _linkDetector.buildDefaultClassifier() ;
+        } else {
+            Classifier classifier = buildClassifierFromOptString(configDisambig) ;
+            _linkDetector.buildClassifier(classifier) ;
+        }
+        _linkDetector.saveClassifier(_modelDetect) ;
+    }
+
+    private Classifier buildClassifierFromOptString(String optString) throws Exception {
+        String[] options = Utils.splitOptions(optString) ;
+        String classname = options[0] ;
+        options[0] = "" ;
+        return (Classifier) Utils.forName(Classifier.class, classname, options) ;
+    }
 
 
 	public static void main(String[] args) throws Exception {
@@ -266,16 +354,16 @@ public class WikiMiner {
 		if(new File(output_dir + "/stats.csv").exists())
 			trainer.loadVariables();
 		
-		//TESTES
-		//TESTES//
-		
+		System.out.println("Disambiguator Policy: " + trainer._topicDetector.getDisambiguationPolicy().toString());
 		BufferedReader input = new BufferedReader(new InputStreamReader(System.in)) ;
 		
 		while (true) {
 			System.out.println("What would you like to do?") ;
 			System.out.println(" - [1] Create Articles Train Set.") ;
-			System.out.println(" - [2] Create in/out links matriz") ;
-			System.out.println(" - [3] create arff files.") ;
+			System.out.println(" - [2] Create grafo") ;
+			System.out.println(" - [3] Create artigos-features.") ;
+			System.out.println(" - [4] Create pares-features.") ;
+			System.out.println(" - [5] create classifiers.") ;
 			System.out.println(" - or ENTER to quit.") ;
 			
 			String line = input.readLine() ;
@@ -296,12 +384,24 @@ public class WikiMiner {
 				trainer.createArticlesSet(wikipedia, PageMap);
 				break ;
 			case 2:
-				trainer.createInOutLinksMatriz(wikipedia);
+				trainer.createGrafo(wikipedia);
 				break;
 			case 3:
+				trainer.articlesFeature(wikipedia);
+				break;
+			case 4:
 				System.out.println("Dataset name:") ;
 				String datasetName = input.readLine() ;
-				trainer.createArffFiles(datasetName);;
+				trainer.createParesFeatures(datasetName);;
+				break ;
+			case 5:
+				System.out.println("Disambiguation classifer config (or ENTER to use default):") ;
+				String configDisambig = input.readLine() ;
+				
+				System.out.println("Detection classifer config (or ENTER to use default):") ;
+				String configDetect = input.readLine() ;
+				
+				trainer.createClassifiers(configDisambig, configDetect) ;
 				break ;
 			default:
 				System.out.println("Invalid Input") ;
