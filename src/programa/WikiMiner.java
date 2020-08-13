@@ -90,7 +90,7 @@ public class WikiMiner {
 		_statsCsv = new File(_dataDir.getPath() + "/stats.csv");
 		
 		//MOD
-		_topicDetector.setDisambiguationPolicy(DisambiguationPolicy.STRICT);
+		_topicDetector.setDisambiguationPolicy(DisambiguationPolicy.LOOSE);
 		_artigosFeatures = new File(_dataDir.getPath() + "/artigos-features.csv");
 		_paresFeatures = new File(_dataDir.getPath() + "/pares-features.csv");
 		
