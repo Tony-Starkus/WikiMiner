@@ -159,6 +159,9 @@ public class WikiMiner {
 	    /* Média Artimética Simples de inlinks e outlinks */
 	    _mediaInLinks = totalInLinks / totalArticles;
 	    _mediaOutLinks = totalOutLinks / totalArticles;
+	    
+	    System.out.println("mediaInLinks," + _mediaInLinks);
+	    System.out.println("mediaOutLinks," + _mediaOutLinks);
 	
 	    stats_csv.println("mediaInLinks," + _mediaInLinks);
 	    stats_csv.println("mediaOutLinks," + _mediaOutLinks);
@@ -263,7 +266,7 @@ public class WikiMiner {
 				double outlink_ratio = (double) article.getTotalLinksOutCount() / (double) totalLinkCount;
 				BigDecimal bgdIN = new BigDecimal(Double.toString(inlink_ratio));
 				BigDecimal bgdOUT = new BigDecimal(Double.toString(outlink_ratio));
-				articlesFeaturePw.println(id + ",\"" + page.getTitle() + "\"," + bgdIN.setScale(6, RoundingMode.HALF_UP) + "," + bgdOUT.setScale(6, RoundingMode.HALF_UP));
+				articlesFeaturePw.println(id + "_\"" + page.getTitle() + "\"_" + bgdIN.setScale(6, RoundingMode.HALF_UP) + "_" + bgdOUT.setScale(6, RoundingMode.HALF_UP));
 			} else {
 				System.err.println("Page exist: " + page.exists() + "| PageType: " + page.getType() +" | Page ID: " + page.getId());
 			}
