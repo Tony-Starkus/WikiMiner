@@ -21,21 +21,19 @@ import org.wikipedia.miner.model.Page;
 import org.wikipedia.miner.model.Wikipedia;
 import org.wikipedia.miner.model.Page.PageType;
 import org.wikipedia.miner.util.ArticleSet;
-import org.wikipedia.miner.util.ArticleSetBuilder;
-import org.wikipedia.miner.util.Result;
 import org.wikipedia.miner.util.WikipediaConfiguration;
 
 import annotationMOD.DisambiguatorMOD;
 import annotationMOD.TopicDetector;
 import annotationMOD.TopicDetector.DisambiguationPolicy;
-import mods.LinkDetectorMOD; //LinkDetector MODIFICADO
+import mods.LinkDetectorMOD; //LinkDetector Modified
 import weka.classifiers.Classifier;
 import weka.core.Utils;
-/*VERSÃO MOD - MODIFICADO - POSSÍVEL PROGRAMA 2*/
+
 public class WikiMiner {
 	
 	/*MOD*/
-	static String output_dir = "/home/thalisson/Documents/WikiMiner/";
+	static String outputDir = "";
 	/*MOD*/
 	
 	private Wikipedia _wikipedia ;
@@ -75,7 +73,7 @@ public class WikiMiner {
 		
 		_disambiguator = new DisambiguatorMOD(_wikipedia) ;
 		_topicDetector = new TopicDetector(_wikipedia, _disambiguator) ;
-		_linkDetector = new LinkDetectorMOD(_wikipedia, output_dir) ;
+		_linkDetector = new LinkDetectorMOD(_wikipedia, outputDir) ;
 		
 		_artsTrain = new File(_dataDir.getPath() + "/articlesSetID.csv") ;
 		_artsTestDisambig = new File(_dataDir.getPath() + "/articlesTestDisambig.csv") ;
@@ -97,7 +95,7 @@ public class WikiMiner {
 	}
 	
 	public void loadVariables() throws FileNotFoundException {
-		Scanner file = new Scanner(new File(output_dir + "stats.csv"));
+		Scanner file = new Scanner(new File(outputDir + "stats.csv"));
 		while(file.hasNextLine()) {
 			String[] line = file.nextLine().split(",");
 			switch(line[0]) {
@@ -115,7 +113,7 @@ public class WikiMiner {
 	public void loadArticlesSetList() {
 		Scanner file;
 		try {
-			file = new Scanner(new File(output_dir + "articlesSetID.csv"));
+			file = new Scanner(new File(outputDir + "articlesSetID.csv"));
 			if(_articlesSet_list.size() > 0)
 				_articlesSet_list.clear();
 			while(file.hasNextLine()) {
@@ -123,7 +121,7 @@ public class WikiMiner {
 				_articlesSet_list.add(id);
 			}
 			file.close();
-			System.out.println("Tamanho da lista de articles: " + _articlesSet_list.size());
+			System.out.println("Article list size: " + _articlesSet_list.size());
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -133,7 +131,7 @@ public class WikiMiner {
 		/* https://pt.khanacademy.org/math/probability/data-distributions-a1/summarizing-spread-distributions/a/calculating-standard-deviation-step-by-step */
 		ArrayList<Integer> articles_id_list_temp = new ArrayList<>();
 		WIterator<Integer, DbPage> IteratorMedia = pageMap.getIterator();
-		PrintWriter stats_csv = new PrintWriter(output_dir + "stats.csv", "UTF-8");
+		PrintWriter stats_csv = new PrintWriter(outputDir + "stats.csv", "UTF-8");
 		int totalInLinks = 0;
 	    int totalOutLinks = 0;
 	    int totalArticles = 0;
@@ -169,7 +167,7 @@ public class WikiMiner {
 	    loadVariables();
 	    
 	    //Criando csv com o id dos articles para treinamento
-	    System.out.println("Criando csv com o id dos articles: articlesSetID.csv");
+	    System.out.println("Creating csv file with articles id's: articlesSetID.csv");
 	    PrintWriter pwArticleSet = new PrintWriter(_artsTrain);
 	    int aux = 0;
 	    for(int id : articles_id_list_temp) {
@@ -184,11 +182,11 @@ public class WikiMiner {
 	    			}
 			    		
 	    		} else {
-	    			System.err.println("Está página não é um article!");
+	    			System.err.println("This page is not an article!");
 	    			System.exit(1);
 	    		}
 	    	} else {
-	    		System.err.println("Está página não existe!");
+	    		System.err.println("This page doens't exist!");
 	    		System.exit(1);
 	    	}
 	    }
@@ -200,10 +198,10 @@ public class WikiMiner {
 	
 	private void createGrafo(Wikipedia wikipedia) throws FileNotFoundException {
 		if(_articlesSet_list.size() < 1) {
-			System.err.println("A lista de id de articles não está carregada!");
+			System.err.println("The id article set is not loaded!");
 			return;
 		}
-		PrintWriter matriz_file = new PrintWriter(output_dir + "grafo.csv");
+		PrintWriter matriz_file = new PrintWriter(outputDir + "grafo.csv");
 		
 		//Criando Matriz
 		int qtdIter = 0;
@@ -248,7 +246,7 @@ public class WikiMiner {
 	
 	private void articlesFeature(Wikipedia wikipedia) throws IOException, Exception {
 		if(_articlesSet_list.size() < 1) {
-			System.err.println("A lista de id de articles não está carregada!");
+			System.err.println("The id article set is not loaded!");
 			return;
 		}
 		long totalLinkCount = wikipedia.getEnvironment().getDbPageLinkCounts().getDatabaseSize();
@@ -279,7 +277,7 @@ public class WikiMiner {
     	if (!_artsTrain.canRead()) 
             throw new Exception("Article sets have not yet been created") ;
     	if(_articlesSet_list.size() < 1) {
-    		System.err.println("A lista de ID dos articles de treinamento não está carregado");
+    		System.err.println("The id article set training is not loaded!");
     		return;
     	}
     		
@@ -290,7 +288,7 @@ public class WikiMiner {
 			System.out.println("Construção concluída");
 		} else {
 			System.out.println("_disambiguator.train:");
-	        _disambiguator.trainMOD(trainingSet, SnippetLength.full, datasetName + "_disambiguation", output_dir, null) ;
+	        _disambiguator.trainMOD(trainingSet, SnippetLength.full, datasetName + "_disambiguation", outputDir, null) ;
 	        System.out.println("_disambiguator.saveTrainingData:");
 	        _disambiguator.saveTrainingData(_arffDisambig) ;
 	        System.out.println("_disambiguator.buildDefaultClassifier:");
@@ -338,11 +336,11 @@ public class WikiMiner {
 
 	public static void main(String[] args) throws Exception {
 		
-		File dataDir = new File(output_dir);
+		File dataDir = new File(outputDir);
 		if(!dataDir.exists())
 			dataDir.mkdir();
 		
-		WikipediaConfiguration conf = new WikipediaConfiguration(new File("/home/thalisson/Programas/PIBIC/Wikification/wikipedia-miner-starwars/configs/wikipedia-template-starwars.xml")) ;
+		WikipediaConfiguration conf = new WikipediaConfiguration(new File("")) ;
 		conf.addDatabaseToCache(DatabaseType.label) ;
 		conf.addDatabaseToCache(DatabaseType.pageLinksInNoSentences) ;
 		Wikipedia wikipedia = new Wikipedia(conf, false) ;
@@ -351,10 +349,10 @@ public class WikiMiner {
 		WikiMiner trainer = new WikiMiner(dataDir, wikipedia) ;
 		
 		_articlesSet_list = new ArrayList<>();
-		if(new File(output_dir + "articlesSetID.csv").exists())
+		if(new File(outputDir + "articlesSetID.csv").exists())
 			trainer.loadArticlesSetList();
 		
-		if(new File(output_dir + "/stats.csv").exists())
+		if(new File(outputDir + "/stats.csv").exists())
 			trainer.loadVariables();
 		
 		System.out.println("Disambiguator Policy: " + trainer._topicDetector.getDisambiguationPolicy().toString());
